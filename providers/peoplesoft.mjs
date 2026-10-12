@@ -111,7 +111,13 @@ import { intInRange } from './_config-utils.mjs';
 // The Fluid job-search page's fixed path shape. {site} (capture group 1) is
 // the tenant's PeopleSoft site segment — used to rebuild every other URL
 // this provider needs, never trusted from elsewhere in the given URL.
-const PS_SEARCH_PATH_RE = /^\/psc\/([^/]+)\/EMPLOYEE\/HRMS\/c\/HRS_HRAM_FL\.HRS_CG_SEARCH_FL\.GBL$/i;
+// {portal} (capture group 2) is the PeopleSoft portal segment. Most tenants use
+// EMPLOYEE; some public candidate sites use another portal name, e.g. the State
+// of Wisconsin's wj.wi.gov runs at /psc/wisjobs/CAREERS/HRMS/... (verified live
+// 2026-10-12). Restricted to a plain identifier so it is safe to splice back
+// into a path.
+const PS_SEARCH_PATH_RE = /^\/psc\/([^/]+)\/([A-Za-z0-9_]+)\/HRMS\/c\/HRS_HRAM_FL\.HRS_CG_SEARCH_FL\.GBL$/i;
+const DEFAULT_PORTAL = 'EMPLOYEE';
 
 const SEARCH_PAGE_PARAM = 'HRS_APP_SCHJOB_FL';
 const DETAIL_PAGE_PARAM = 'HRS_APP_JBPST_FL';
@@ -174,7 +180,7 @@ const HEADERS = {
  * not have a branded-per-tenant-domain exception, which is what this
  * actually is.)
  * @param {import('./_types.js').PortalEntry} entry
- * @returns {{origin: string, site: string, searchUrl: string} | null}
+ * @returns {{origin: string, site: string, portal: string, searchUrl: string} | null}
  */
 export function resolveConfig(entry) {
   for (const raw of [entry?.api, entry?.careers_url]) {
@@ -189,14 +195,15 @@ export function resolveConfig(entry) {
     const m = u.pathname.match(PS_SEARCH_PATH_RE);
     if (!m) continue;
     const site = m[1];
-    return { origin: u.origin, site, searchUrl: buildSearchUrl(u.origin, site) };
+    const portal = m[2];
+    return { origin: u.origin, site, portal, searchUrl: buildSearchUrl(u.origin, site, portal) };
   }
   return null;
 }
 
-/** @param {string} origin @param {string} site */
-export function buildSearchUrl(origin, site) {
-  const u = new URL(`${origin}/psc/${site}/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL`);
+/** @param {string} origin @param {string} site @param {string} [portal] */
+export function buildSearchUrl(origin, site, portal = DEFAULT_PORTAL) {
+  const u = new URL(`${origin}/psc/${site}/${portal}/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL`);
   u.searchParams.set('Page', SEARCH_PAGE_PARAM);
   u.searchParams.set('Action', 'U');
   u.searchParams.set('FOCUS', 'Applicant');
@@ -205,12 +212,12 @@ export function buildSearchUrl(origin, site) {
 }
 
 /**
- * @param {{origin: string, site: string}} config
+ * @param {{origin: string, site: string, portal?: string}} config
  * @param {string} jobId
  * @param {number} postingSeq
  */
 export function buildDetailUrl(config, jobId, postingSeq) {
-  const u = new URL(`${config.origin}/psc/${config.site}/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL`);
+  const u = new URL(`${config.origin}/psc/${config.site}/${config.portal || DEFAULT_PORTAL}/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL`);
   u.searchParams.set('Page', DETAIL_PAGE_PARAM);
   u.searchParams.set('Action', 'U');
   u.searchParams.set('FOCUS', 'Applicant');

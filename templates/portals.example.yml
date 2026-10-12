@@ -1193,7 +1193,7 @@ search_queries:
 #   neogov          www.schooljobs.com/careers/<agency>[/<folder>] or www.governmentjobs.com/careers/<agency>[/<folder>]
 #                   (community colleges, school districts, public agencies; a <folder> scopes to one custom careers page)
 #   redrover        jobs.redroverk12.com/org/<orgId>  (K-12 board; public postings only)
-#   peoplesoft      /psc/<site>/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL  (PeopleSoft Fluid Candidate
+#   peoplesoft      /psc/<site>/<portal>/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL  (PeopleSoft Fluid Candidate
 #                   Gateway — the URL PATH is the signature, not the host: every tenant runs on its own
 #                   branded institution domain, e.g. recruit.uwo.ca, careers.torontomu.ca, hr.mcmaster.ca, wsib.ca)
 #   pageup          careers.pageuppeople.com/<tenant>/<site>/<lang>/  (PageUp vendor-hosted careers site; numeric <tenant>.
@@ -1441,7 +1441,8 @@ search_queries:
 #   # PeopleSoft Fluid Candidate Gateway. No vendor-owned host to pattern-match
 #   # (every tenant runs on its own branded institution domain) — detect() keys
 #   # on the Fluid job-search URL PATH instead, so any host works as long as the
-#   # path is exactly this shape.
+#   # path is exactly this shape. The portal segment is usually EMPLOYEE; another
+#   # name (e.g. the State of Wisconsin's /psc/wisjobs/CAREERS/...) is kept as given.
 #   careers_url: https://careers.exampleu.edu/psc/exu1/EMPLOYEE/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U&FOCUS=Applicant&SiteId=1
 #   max_pages: 20          # optional cap on "load more" POST replays (default 20, max 100) —
 #                          # PeopleSoft's own anonymous-session cap is ~100 results regardless

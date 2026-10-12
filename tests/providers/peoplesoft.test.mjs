@@ -114,6 +114,34 @@ try {
   }
 
   {
+    // A non-EMPLOYEE portal segment (State of Wisconsin, wj.wi.gov, verified
+    // live 2026-10-12) resolves, and the portal round-trips into every URL the
+    // provider builds instead of being rewritten back to EMPLOYEE.
+    const cfg = resolveConfig({ name: 'State of Wisconsin', careers_url: 'https://wj.wi.gov/psc/wisjobs/CAREERS/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U&SiteID=1&FOCUS=Applicant' });
+    const detail = cfg && buildDetailUrl(cfg, '22235', 1);
+    if (cfg && cfg.site === 'wisjobs' && cfg.portal === 'CAREERS'
+        && cfg.searchUrl.includes('/psc/wisjobs/CAREERS/HRMS/')
+        && detail.includes('/psc/wisjobs/CAREERS/HRMS/') && detail.includes('JobOpeningId=22235')) {
+      pass('resolveConfig() keeps a non-EMPLOYEE portal (CAREERS) in the search and detail URLs');
+    } else {
+      fail(`resolveConfig() non-EMPLOYEE portal wrong: ${JSON.stringify(cfg)} detail=${detail}`);
+    }
+    // Configs built without a portal (older callers, the CONFIG fixture above) keep EMPLOYEE.
+    if (buildDetailUrl({ origin: 'https://recruit.exampleu.ca', site: 'exu1' }, '1', 1).includes('/psc/exu1/EMPLOYEE/HRMS/')) {
+      pass('buildDetailUrl() defaults the portal to EMPLOYEE when the config has none');
+    } else {
+      fail('buildDetailUrl() portal default is not EMPLOYEE');
+    }
+    // The portal is spliced into a path, so anything but a plain identifier is refused.
+    const bad = resolveConfig({ name: 'X', careers_url: 'https://h.example/psc/s/EMP%2F..%2FX/HRMS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL' });
+    if (bad === null) {
+      pass('resolveConfig() rejects a portal segment that is not a plain identifier');
+    } else {
+      fail(`resolveConfig() accepted an unsafe portal segment: ${JSON.stringify(bad)}`);
+    }
+  }
+
+  {
     const hit = peoplesoft.detect({ name: 'ExampleU', careers_url: SEARCH_URL });
     if (hit && hit.url.includes('Page=HRS_APP_SCHJOB_FL') && hit.url.startsWith('https://recruit.exampleu.ca/psc/exu1/')) {
       pass('peoplesoft.detect() matches the Fluid search path and builds the canonical search URL');
